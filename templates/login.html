@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">🔐 Login</h2>
+    
+    <form method="POST" action="{{ url_for('login') }}">
+        <div class="form-group">
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" name="username" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Entrar
+        </button>
+    </form>
+    
+    <div style="margin-top: 20px; text-align: center; color: #7f8c8d;">
+        <small>Usuários de teste:</small><br>
+        <small>Admin: admin / admin123</small><br>
+        <small>Vendedor: vendedor1 / vendedor123</small>
+    </div>
+</div>
+{% endblock %}

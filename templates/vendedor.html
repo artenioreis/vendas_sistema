@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Vendedor{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    {% if vendedor %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">👋 Olá, {{ vendedor.Nome_Guerra }}</h2>
+            <span class="status-badge {{ 'ativo' if vendedor.Situacao == 'ATIVO' else 'inativo' }}">
+                {{ vendedor.Situacao }}
+            </span>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card meta">
+                <div class="icon">🎯</div>
+                <div class="value">R$ {{ "%.2f"|format(meta) }}</div>
+                <div class="label">Meta Mensal</div>
+            </div>
+            
+            <div class="stat-card realizado">
+                <div class="icon">💰</div>
+                <div class="value">R$ {{ "%.2f"|format(realizado) }}</div>
+                <div class="label">Realizado</div>
+            </div>
+            
+            <div class="stat-card comissao">
+                <div class="icon">💵</div>
+                <div class="value">R$ {{ "%.2f"|format(comissao) }}</div>
+                <div class="label">Comissão</div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <h3>Progresso da Meta: {{ "%.1f"|format(percentual) }}%</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ percentual }}%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                <span>R$ 0</span>
+                <span>R$ {{ "%.2f"|format(meta) }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title">📊 Desempenho Mensal</h3>
+        <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title">📋 Informações Pessoais</h3>
+        <table>
+            <tr>
+                <td><strong>Código:</strong></td>
+                <td>{{ vendedor.Codigo }}</td>
+            </tr>
+            <tr>
+                <td><strong>Email:</strong></td>
+                <td>{{ vendedor.Email }}</td>
+            </tr>
+            <tr>
+                <td><strong>CPF/CNPJ:</strong></td>
+                <td>{{ vendedor.CPF_CNPJ }}</td>
+            </tr>
+            <tr>
+                <td><strong>Estabelecimento:</strong></td>
+                <td>{{ vendedor.Cod_EstabeOpe }}</td>
+            </tr>
+        </table>
+    </div>
+    {% else %}
+    <div class="card">
+        <h3>Nenhum dado encontrado para este vendedor.</h3>
+        <p>Entre em contato com o administrador do sistema.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if chart_data %}
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_data.labels | tojson }},
+            datasets: [{
+                label: 'Valores (R$)',
+                data: {{ chart_data.values | tojson }},
+                backgroundColor: {{ chart_data.colors | tojson }},
+                borderColor: {{ chart_data.colors | tojson }},
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'R$ ' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

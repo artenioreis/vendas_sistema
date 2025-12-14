@@ -1,0 +1,5 @@
+Flask==2.3.3
+Flask-Login==0.6.3
+pyodbc==5.0.1
+python-dotenv==1.0.0
+chart.js==0.1.2

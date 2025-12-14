@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrador{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">👑 Painel Administrativo</h2>
+            <div class="total-stats">
+                <span class="total-stat">Total Meta: R$ {{ "%.2f"|format(chart_data.total_meta) }}</span>
+                <span class="total-stat">Total Realizado: R$ {{ "%.2f"|format(chart_data.total_realizado) }}</span>
+                <span class="total-stat">Total Comissão: R$ {{ "%.2f"|format(chart_data.total_comissao) }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title">📈 Desempenho Geral</h3>
+        <div class="chart-container">
+            <canvas id="overallChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title">👥 Todos os Vendedores</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Meta (R$)</th>
+                        <th>Realizado (R$)</th>
+                        <th>Comissão (R$)</th>
+                        <th>% Atingido</th>
+                        <th>Status</th>
+                        <th>Supervisor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in vendedores %}
+                    <tr>
+                        <td>{{ v.Codigo }}</td>
+                        <td>{{ v.Nome_Guerra }}</td>
+                        <td>{{ "%.2f"|format(v.Vlr_Objetivo or 0) }}</td>
+                        <td>{{ "%.2f"|format(v.Vlr_Realizado or 0) }}</td>
+                        <td>{{ "%.2f"|format(v.Vlr_Comissao or 0) }}</td>
+                        <td>
+                            {% set percent = ((v.Vlr_Realizado or 0) / (v.Vlr_Objetivo or 1) * 100) %}
+                            <span class="percent-badge {{ 'success' if percent >= 100 else 'warning' if percent >= 70 else 'danger' }}">
+                                {{ "%.1f"|format(percent) }}%
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge {{ 'ativo' if v.Situacao == 'ATIVO' else 'inativo' }}">
+                                {{ v.Situacao }}
+                            </span>
+                        </td>
+                        <td>{{ v.Cod_Supervisor }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title">📊 Comparativo por Vendedor</h3>
+        <div class="chart-container">
+            <canvas id="vendedoresChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico Geral
+    const overallCtx = document.getElementById('overallChart').getContext('2d');
+    const overallChart = new Chart(overallCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Meta', 'Realizado', 'Comissão'],
+            datasets: [{
+                data: [
+                    {{ chart_data.total_meta }},
+                    {{ chart_data.total_realizado }},
+                    {{ chart_data.total_comissao }}
+                ],
+                backgroundColor: [
+                    '#3498db',
+                    '#2ecc71',
+                    '#f39c12'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': R$ ' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Gráfico de Vendedores
+    const vendedoresCtx = document.getElementById('vendedoresChart').getContext('2d');
+    const vendedoresChart = new Chart(vendedoresCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_data.vendedores | map(attribute='nome') | list | tojson }},
+            datasets: [
+                {
+                    label: 'Meta',
+                    data: {{ chart_data.vendedores | map(attribute='meta') | list | tojson }},
+                    backgroundColor: '#3498db',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Realizado',
+                    data: {{ chart_data.vendedores | map(attribute='realizado') | list | tojson }},
+                    backgroundColor: '#2ecc71',
+                    borderColor: '#27ae60',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Comissão',
+                    data: {{ chart_data.vendedores | map(attribute='comissao') | list | tojson }},
+                    backgroundColor: '#f39c12',
+                    borderColor: '#d68910',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    stacked: false
+                },
+                y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': R$ ' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.total-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.total-stat {
+    background: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #2c3e50;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.percent-badge {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.percent-badge.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.percent-badge.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.percent-badge.danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-badge.ativo {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inativo {
+    background: #f8d7da;
+    color: #721c24;
+}
+</style>
+{% endblock %}
