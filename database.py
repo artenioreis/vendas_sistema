@@ -45,12 +45,14 @@ class DatabaseManager:
                 cursor.execute(query)
             
             # Para SELECT
-            if query.strip().upper().startswith('SELECT'):
-                columns = [column[0] for column in cursor.description]
-                results = []
-                for row in cursor.fetchall():
-                    results.append(dict(zip(columns, row)))
-                return results
+            if query.strip().upper().startswith('SELECT') or query.strip().upper().startswith('WITH'):
+                if cursor.description:
+                    columns = [column[0] for column in cursor.description]
+                    results = []
+                    for row in cursor.fetchall():
+                        results.append(dict(zip(columns, row)))
+                    return results
+                return []
             else:
                 # Para INSERT, UPDATE, DELETE
                 conn.commit()
@@ -60,3 +62,30 @@ class DatabaseManager:
             return None
         finally:
             conn.close()
+
+    # --- Métodos de Gestão de Usuários ---
+
+    def get_user_by_username(self, username):
+        query = "SELECT * FROM USUARIOS_SISTEMA WHERE username = ?"
+        results = self.execute_query(query, (username,))
+        return results[0] if results else None
+
+    def get_user_by_id(self, user_id):
+        query = "SELECT * FROM USUARIOS_SISTEMA WHERE id = ?"
+        results = self.execute_query(query, (user_id,))
+        return results[0] if results else None
+
+    def create_user(self, username, password_hash, role, codigo_vendedor=None):
+        query = """
+        INSERT INTO USUARIOS_SISTEMA (username, password_hash, role, codigo_vendedor)
+        VALUES (?, ?, ?, ?)
+        """
+        return self.execute_query(query, (username, password_hash, role, codigo_vendedor))
+
+    def delete_user(self, user_id):
+        query = "DELETE FROM USUARIOS_SISTEMA WHERE id = ?"
+        return self.execute_query(query, (user_id,))
+    
+    def get_all_users(self):
+        query = "SELECT * FROM USUARIOS_SISTEMA ORDER BY username"
+        return self.execute_query(query)

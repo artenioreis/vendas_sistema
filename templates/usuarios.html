@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">👤 Gerenciar Usuários</h2>
+        </div>
+        
+        <div class="form-container" style="margin: 0; padding: 0; box-shadow: none; max-width: 100%;">
+            <form action="{{ url_for('adicionar_usuario') }}" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; background: #f8f9fa; padding: 20px; border-radius: 5px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label>Usuário:</label>
+                    <input type="text" name="username" class="form-control" required placeholder="Ex: joao.silva">
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label>Senha:</label>
+                    <input type="password" name="password" class="form-control" required placeholder="******">
+                </div>
+                <div style="width: 150px;">
+                    <label>Tipo:</label>
+                    <select name="role" class="form-control" id="roleSelect" onchange="toggleCodigo()">
+                        <option value="vendedor">Vendedor</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 150px;" id="codigoDiv">
+                    <label>Cód. Vendedor:</label>
+                    <input type="number" name="codigo" class="form-control" placeholder="Do banco de dados">
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 48px; margin-bottom: 2px;">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title">Lista de Usuários</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuário</th>
+                        <th>Tipo</th>
+                        <th>Cód. Vendedor</th>
+                        <th>Data Criação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in usuarios %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>
+                            <span class="role-badge" style="background: {{ '#e67e22' if user.role == 'admin' else '#3498db' }}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>{{ user.codigo_vendedor if user.codigo_vendedor else '-' }}</td>
+                        <td>{{ user.created_at }}</td>
+                        <td>
+                            {% if user.username != current_user.username %}
+                            <a href="{{ url_for('deletar_usuario', user_id=user.id) }}" 
+                               class="btn" 
+                               style="background: #e74c3c; color: white; padding: 5px 10px; font-size: 0.8em; text-decoration: none;"
+                               onclick="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                Excluir
+                            </a>
+                            {% else %}
+                            <span style="color: #95a5a6; font-size: 0.8em;">(Você)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCodigo() {
+    const role = document.getElementById('roleSelect').value;
+    const codigoDiv = document.getElementById('codigoDiv');
+    const codigoInput = codigoDiv.querySelector('input');
+    
+    if (role === 'admin') {
+        codigoDiv.style.opacity = '0.5';
+        codigoInput.disabled = true;
+        codigoInput.required = false;
+        codigoInput.value = '';
+    } else {
+        codigoDiv.style.opacity = '1';
+        codigoInput.disabled = false;
+        codigoInput.required = true;
+    }
+}
+</script>
+{% endblock %}

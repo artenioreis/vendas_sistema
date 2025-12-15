@@ -6,14 +6,19 @@
     <title>{% block title %}Sistema de Vendas{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="header">
         <nav class="navbar container">
-            <div class="logo">📊 Sistema de Vendas</div>
+            <div class="logo">
+                <a href="{{ url_for('index') }}" style="text-decoration: none; color: white;">
+                    📊 Sistema de Vendas
+                </a>
+            </div>
             {% if current_user.is_authenticated %}
             <div class="user-info">
-                <span>Olá, {{ current_user.id }}!</span>
+                <span>Olá, {{ current_user.username }}!</span>
                 <span class="role-badge">
                     {% if current_user.role == 'admin' %}
                     👑 Administrador
@@ -21,6 +26,13 @@
                     👤 Vendedor
                     {% endif %}
                 </span>
+                
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('gerenciar_usuarios') }}" class="btn" style="background: rgba(255,255,255,0.2); color: white; padding: 5px 15px;">
+                    <i class="fas fa-users"></i> Usuários
+                </a>
+                {% endif %}
+                
                 <a href="{{ url_for('logout') }}" class="btn btn-logout">Sair</a>
             </div>
             {% endif %}

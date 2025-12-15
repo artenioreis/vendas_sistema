@@ -7,11 +7,18 @@
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">👑 Painel Administrativo</h2>
-            <div class="total-stats">
-                <span class="total-stat">Total Meta: R$ {{ "%.2f"|format(chart_data.total_meta) }}</span>
-                <span class="total-stat">Total Realizado: R$ {{ "%.2f"|format(chart_data.total_realizado) }}</span>
-                <span class="total-stat">Total Comissão: R$ {{ "%.2f"|format(chart_data.total_comissao) }}</span>
+            <div class="controls" style="display: flex; gap: 15px; align-items: center;">
+                <a href="{{ url_for('admin_dashboard', mostrar_inativos=0 if mostrar_inativos else 1) }}" 
+                   class="btn" 
+                   style="background: {{ '#e74c3c' if mostrar_inativos else '#95a5a6' }}; color: white; text-decoration: none;">
+                    {{ 'Ocultar Inativos' if mostrar_inativos else 'Mostrar Inativos' }}
+                </a>
             </div>
+        </div>
+        <div class="total-stats">
+            <span class="total-stat">Total Meta: R$ {{ "%.2f"|format(chart_data.total_meta) }}</span>
+            <span class="total-stat">Total Realizado: R$ {{ "%.2f"|format(chart_data.total_realizado) }}</span>
+            <span class="total-stat">Total Comissão: R$ {{ "%.2f"|format(chart_data.total_comissao) }}</span>
         </div>
     </div>
     
@@ -23,7 +30,7 @@
     </div>
     
     <div class="card">
-        <h3 class="card-title">👥 Todos os Vendedores</h3>
+        <h3 class="card-title">👥 Lista de Vendedores</h3>
         <div class="table-container">
             <table>
                 <thead>
@@ -40,7 +47,7 @@
                 </thead>
                 <tbody>
                     {% for v in vendedores %}
-                    <tr>
+                    <tr style="{{ 'opacity: 0.6; background: #f9f9f9;' if v.Situacao == 'INATIVO' else '' }}">
                         <td>{{ v.Codigo }}</td>
                         <td>{{ v.Nome_Guerra }}</td>
                         <td>{{ "%.2f"|format(v.Vlr_Objetivo or 0) }}</td>
@@ -79,7 +86,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Gráfico Geral
     const overallCtx = document.getElementById('overallChart').getContext('2d');
-    const overallChart = new Chart(overallCtx, {
+    new Chart(overallCtx, {
         type: 'pie',
         data: {
             labels: ['Meta', 'Realizado', 'Comissão'],
@@ -89,34 +96,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     {{ chart_data.total_realizado }},
                     {{ chart_data.total_comissao }}
                 ],
-                backgroundColor: [
-                    '#3498db',
-                    '#2ecc71',
-                    '#f39c12'
-                ]
+                backgroundColor: ['#3498db', '#2ecc71', '#f39c12']
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.label + ': R$ ' + context.raw.toFixed(2);
-                        }
-                    }
-                }
+                legend: { position: 'bottom' }
             }
         }
     });
     
     // Gráfico de Vendedores
     const vendedoresCtx = document.getElementById('vendedoresChart').getContext('2d');
-    const vendedoresChart = new Chart(vendedoresCtx, {
+    new Chart(vendedoresCtx, {
         type: 'bar',
         data: {
             labels: {{ chart_data.vendedores | map(attribute='nome') | list | tojson }},
@@ -125,22 +119,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Meta',
                     data: {{ chart_data.vendedores | map(attribute='meta') | list | tojson }},
                     backgroundColor: '#3498db',
-                    borderColor: '#2980b9',
-                    borderWidth: 1
+                    hidden: true
                 },
                 {
                     label: 'Realizado',
                     data: {{ chart_data.vendedores | map(attribute='realizado') | list | tojson }},
-                    backgroundColor: '#2ecc71',
-                    borderColor: '#27ae60',
-                    borderWidth: 1
+                    backgroundColor: '#2ecc71'
                 },
                 {
                     label: 'Comissão',
                     data: {{ chart_data.vendedores | map(attribute='comissao') | list | tojson }},
-                    backgroundColor: '#f39c12',
-                    borderColor: '#d68910',
-                    borderWidth: 1
+                    backgroundColor: '#f39c12'
                 }
             ]
         },
@@ -148,27 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: {
-                    stacked: false
-                },
-                y: {
-                    stacked: false,
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toFixed(2);
-                        }
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': R$ ' + context.raw.toFixed(2);
-                        }
-                    }
-                }
+                x: { stacked: false },
+                y: { beginAtZero: true }
             }
         }
     });
@@ -179,8 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
 .total-stats {
     display: flex;
     gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 10px;
 }
-
 .total-stat {
     background: white;
     padding: 8px 15px;
@@ -188,45 +159,24 @@ document.addEventListener('DOMContentLoaded', function() {
     font-weight: bold;
     color: #2c3e50;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 1px solid #eee;
 }
-
 .percent-badge {
     padding: 3px 8px;
     border-radius: 3px;
     font-size: 12px;
     font-weight: bold;
 }
-
-.percent-badge.success {
-    background: #d4edda;
-    color: #155724;
-}
-
-.percent-badge.warning {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.percent-badge.danger {
-    background: #f8d7da;
-    color: #721c24;
-}
-
+.percent-badge.success { background: #d4edda; color: #155724; }
+.percent-badge.warning { background: #fff3cd; color: #856404; }
+.percent-badge.danger { background: #f8d7da; color: #721c24; }
 .status-badge {
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: bold;
 }
-
-.status-badge.ativo {
-    background: #d4edda;
-    color: #155724;
-}
-
-.status-badge.inativo {
-    background: #f8d7da;
-    color: #721c24;
-}
+.status-badge.ativo { background: #d4edda; color: #155724; }
+.status-badge.inativo { background: #f8d7da; color: #721c24; }
 </style>
 {% endblock %}
